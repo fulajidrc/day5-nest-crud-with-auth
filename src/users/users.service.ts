@@ -38,11 +38,8 @@ export class UsersService {
     return this.userModel.findByIdAndRemove(id).exec();
   }
 
-  async createUser(email: string, password: string): Promise<User> {
-    return this.userModel.create({
-      email,
-        password,
-      });
+  async createUser(createUser:CreateUserDto): Promise<User> {
+    return this.userModel.create(createUser);
   }
   async getUser(query: object ): Promise<User> {
     console.log('query',query);

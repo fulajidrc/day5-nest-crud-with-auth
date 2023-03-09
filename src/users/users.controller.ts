@@ -1,17 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Res } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import { Public } from 'src/auth/auth.decorater';
+import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+
+import { createResponse, getUserResponse, listUserResponse } from './res';
+import { bedResponse, ForbiddenResponse, UnauthorizedResponse } from 'src/response_type';
+import { updateUserResponse } from './res/updateUserResponse';
 const saltOrRounds = 10;
 
 
+@ApiTags('users')
 @Controller('users')
+@ApiBearerAuth('Bearer')	
+@ApiResponse(bedResponse)
+@ApiResponse(ForbiddenResponse)
+@ApiResponse(UnauthorizedResponse)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @ApiResponse(createResponse)
   @Post()
   async create(@Body() createUserDto: CreateUserDto, @Res() res){
 
@@ -25,12 +34,14 @@ export class UsersController {
     res.status(HttpStatus.CREATED).send({message: 'User added successfully!', data: data});
   }
 
+  @ApiResponse(listUserResponse)
   @Get()
   async findAll(@Res() res) {
     const users = await this.usersService.findAll();
     res.status(HttpStatus.OK).send({message: 'User\'s list', data: users});
   }
 
+  @ApiResponse(getUserResponse)
   @Get(':id')
   async findOne(@Param('id') id: string, @Res() res) {
     const user = await this.usersService.findOne(id);
@@ -39,31 +50,22 @@ export class UsersController {
     : res.status(HttpStatus.BAD_REQUEST).send({message: 'User not found!', data: user});
   }
 
+  @ApiBody({ type: CreateUserDto })
+  @ApiResponse(updateUserResponse)
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Res() res) {
     const user = await this.usersService.update(id, updateUserDto);
     return res.status(HttpStatus.OK).send({message: 'User updated successfully!', data: user});
   }
 
+
+  @ApiResponse({...getUserResponse, description: 'Delete user'})
   @Delete(':id')
   async remove(@Param('id') id: string, @Res() res) {
     const user = await this.usersService.remove(id);
-    return user ? res.status(HttpStatus.OK).send({message: 'User deleted successfully!', data: user}) : res.status(HttpStatus.BAD_REQUEST).send({message: 'User not deleted!', data: user})
+    return user 
+    ? res.status(HttpStatus.OK).send({message: 'User deleted successfully!', data: user}) 
+    : res.status(HttpStatus.BAD_REQUEST).send({message: 'User not deleted!', data: user})
   }
 
-  @Public()
-  @Post('/signup')
-    async createUser(
-        @Body('password') password: string,
-        @Body('email') email: string,
-    ): Promise<User> {
-      console.log('email', email);
-        const saltOrRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltOrRounds);
-        const result = await this.usersService.createUser(
-          email,
-            hashedPassword,
-        );
-        return result;
-    }
 }

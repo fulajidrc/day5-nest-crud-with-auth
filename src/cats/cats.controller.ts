@@ -1,9 +1,11 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { query } from 'express';
 import { CatsService } from './cats.service';
 import { CreateCatDto, ListAllEntities, UpdateCatDto } from './dto';
 import { Cat } from './interfaces/cat.interface';
 
+@ApiTags('cats')
 @Controller('cats')
 export class CatsController {
     constructor(private catsService: CatsService){}

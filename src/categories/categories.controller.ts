@@ -1,14 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res } from '@nestjs/common';
-import { Public } from 'src/auth/auth.decorater';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { bedResponse, ForbiddenResponse, UnauthorizedResponse } from 'src/response_type';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { createCategoryResponse, listCategoryResponse } from './res';
 
+
+@ApiTags('categories')
 @Controller('categories')
+@ApiBearerAuth('Bearer')	
+@ApiResponse(ForbiddenResponse)
+@ApiResponse(UnauthorizedResponse)
+@ApiResponse(bedResponse)
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  @ApiResponse(createCategoryResponse)
   @Post()
   async create(@Body() createCategoryDto: CreateCategoryDto, @Res() res) {
     const category = await this.categoriesService.create(createCategoryDto);
@@ -17,6 +25,8 @@ export class CategoriesController {
     : res.status(400).json({message: 'Category not added!'});
   }
 
+
+  @ApiResponse(listCategoryResponse)
   @Get()
   async findAll(@Res() res) {
     const categories = await this.categoriesService.findAll();
@@ -26,6 +36,7 @@ export class CategoriesController {
     : res.status(400).json({message: 'Category not found!'});
   }
 
+  @ApiResponse({...createCategoryResponse, description: 'User detail'})
   @Get(':id')
   async findOne(@Param('id') id: string, @Res() res) {
     const category = await this.categoriesService.findOne(id);
@@ -35,6 +46,8 @@ export class CategoriesController {
     : res.status(400).json({message: 'Category not found!'});
   }
 
+  @ApiResponse({...createCategoryResponse, description: 'User Update', status: 200})
+  @ApiBody({ type: CreateCategoryDto })
   @Patch(':id')
   async update(@Param('id') id: string, @Res() res, @Body() updateCategoryDto: UpdateCategoryDto) {
     const category = await this.categoriesService.update(id, updateCategoryDto);
@@ -44,6 +57,7 @@ export class CategoriesController {
     : res.status(400).json({message: 'Category not updated!'});
   }
 
+  @ApiResponse({...createCategoryResponse, description: 'User Delete', status: 200})
   @Delete(':id')
   async remove(@Param('id') id: string, @Res() res) {
     const category = await this.categoriesService.remove(id);
